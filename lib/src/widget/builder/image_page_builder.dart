@@ -4,6 +4,7 @@
 ///
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
+import 'package:image_crop/image_crop.dart';
 
 import '../../constants/constants.dart';
 import 'locally_available_builder.dart';
@@ -25,50 +26,67 @@ class ImagePageBuilder extends StatefulWidget {
 
   final List<int>? previewThumbSize;
   final bool? isSendPostType;
-
   @override
   _ImagePageBuilderState createState() => _ImagePageBuilderState();
 }
 
 class _ImagePageBuilderState extends State<ImagePageBuilder> {
+  File? resultFileData;
+  bool hasGetFile = false;
+
   @override
   Widget build(BuildContext context) {
     return LocallyAvailableBuilder(
       asset: widget.asset,
       isOriginal: widget.previewThumbSize == null,
       builder: (BuildContext context, AssetEntity asset) {
-        return GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: widget.delegate.switchDisplayingDetail,
-          child: ExtendedImage(
-            image: AssetEntityImageProvider(
-              asset,
-              isOriginal: widget.previewThumbSize == null,
-              thumbSize: widget.previewThumbSize,
-            ),
-            fit: BoxFit.contain,
-            mode: ExtendedImageMode.gesture,
-            onDoubleTap: widget.delegate.updateAnimation,
-            initGestureConfigHandler: (ExtendedImageState state) {
-              return GestureConfig(
-                initialScale: 1.0,
-                minScale: 1.0,
-                maxScale: 3.0,
-                animationMinScale: 0.6,
-                animationMaxScale: 4.0,
-                cacheGesture: false,
-                inPageView: true,
-              );
-            },
-            loadStateChanged: (ExtendedImageState state) {
-              return widget.delegate.previewWidgetLoadStateChanged(
-                context,
-                state,
-                hasLoaded: state.extendedImageLoadState == LoadState.completed,
-              );
-            },
-          ),
-        );
+        asset.file.then((File? value) {
+          hasGetFile = true;
+          resultFileData = value;
+          setState(() {});
+        });
+        return ((widget.isSendPostType ?? false) && !hasGetFile)
+            ? const SizedBox()
+            : ((widget.isSendPostType ?? false) &&
+                    hasGetFile &&
+                    resultFileData != null)
+                ? Crop.file(
+                    resultFileData!,
+                    key: widget.key,
+                  )
+                : GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: widget.delegate.switchDisplayingDetail,
+                    child: ExtendedImage(
+                      image: AssetEntityImageProvider(
+                        asset,
+                        isOriginal: widget.previewThumbSize == null,
+                        thumbSize: widget.previewThumbSize,
+                      ),
+                      fit: BoxFit.contain,
+                      mode: ExtendedImageMode.gesture,
+                      onDoubleTap: widget.delegate.updateAnimation,
+                      initGestureConfigHandler: (ExtendedImageState state) {
+                        return GestureConfig(
+                          initialScale: 1.0,
+                          minScale: 1.0,
+                          maxScale: 3.0,
+                          animationMinScale: 0.6,
+                          animationMaxScale: 4.0,
+                          cacheGesture: false,
+                          inPageView: true,
+                        );
+                      },
+                      loadStateChanged: (ExtendedImageState state) {
+                        return widget.delegate.previewWidgetLoadStateChanged(
+                          context,
+                          state,
+                          hasLoaded: state.extendedImageLoadState ==
+                              LoadState.completed,
+                        );
+                      },
+                    ),
+                  );
       },
     );
   }
