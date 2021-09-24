@@ -30,9 +30,12 @@ class ImagePageBuilder extends StatefulWidget {
   _ImagePageBuilderState createState() => _ImagePageBuilderState();
 }
 
-class _ImagePageBuilderState extends State<ImagePageBuilder> {
+class _ImagePageBuilderState extends State<ImagePageBuilder>
+    with AutomaticKeepAliveClientMixin<ImagePageBuilder> {
   File? resultFileData;
   bool hasGetFile = false;
+
+  GlobalKey<CropState> globalKey = GlobalKey<CropState>();
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +46,10 @@ class _ImagePageBuilderState extends State<ImagePageBuilder> {
         asset.file.then((File? value) {
           hasGetFile = true;
           resultFileData = value;
-          setState(() {});
+          // ignore: always_specify_types
+          Future.delayed(const Duration(milliseconds: 10), () {
+            setState(() {});
+          });
         });
         return ((widget.isSendPostType ?? false) && !hasGetFile)
             ? const SizedBox()
@@ -52,7 +58,7 @@ class _ImagePageBuilderState extends State<ImagePageBuilder> {
                     resultFileData != null)
                 ? Crop.file(
                     resultFileData!,
-                    key: widget.key,
+                    key: globalKey,
                   )
                 : GestureDetector(
                     behavior: HitTestBehavior.opaque,
@@ -90,4 +96,7 @@ class _ImagePageBuilderState extends State<ImagePageBuilder> {
       },
     );
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }
