@@ -14,6 +14,7 @@ class ImagePageBuilder extends StatefulWidget {
     Key? key,
     required this.asset,
     required this.delegate,
+    required this.globalKey,
     this.previewThumbSize,
     this.isSendPostType,
   }) : super(key: key);
@@ -21,6 +22,7 @@ class ImagePageBuilder extends StatefulWidget {
   /// Asset currently displayed.
   /// 展示的资源
   final AssetEntity asset;
+  final GlobalKey<CropState> globalKey;
 
   final AssetPickerViewerBuilderDelegate<AssetEntity, AssetPathEntity> delegate;
 
@@ -34,9 +36,6 @@ class _ImagePageBuilderState extends State<ImagePageBuilder>
     with AutomaticKeepAliveClientMixin<ImagePageBuilder> {
   File? resultFileData;
   bool hasGetFile = false;
-
-  GlobalKey<CropState> globalKey = GlobalKey<CropState>();
-
   @override
   Widget build(BuildContext context) {
     return LocallyAvailableBuilder(
@@ -58,7 +57,7 @@ class _ImagePageBuilderState extends State<ImagePageBuilder>
                     resultFileData != null)
                 ? Crop.file(
                     resultFileData!,
-                    key: globalKey,
+                    key: widget.globalKey,
                   )
                 : GestureDetector(
                     behavior: HitTestBehavior.opaque,

@@ -9,6 +9,7 @@ import 'dart:math' as math;
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_crop/image_crop.dart';
 
 import '../constants/constants.dart';
 import '../widget/builder/value_listenable_builder_2.dart';
@@ -35,6 +36,9 @@ abstract class AssetPickerViewerBuilderDelegate<Asset, Path> {
   /// Assets provided to preview.
   /// 提供预览的资源
   final List<Asset> previewAssets;
+
+  /// 为发帖模式，保存globalKey
+  List<GlobalKey<CropState>> cropKeyList = [];
 
   /// Theme for the viewer.
   /// 主题
@@ -367,9 +371,12 @@ class DefaultAssetPickerViewerBuilderDelegate
         _builder = AudioPageBuilder(asset: asset);
         break;
       case AssetType.image:
+        GlobalKey<CropState> globalKey = GlobalKey<CropState>();
+        cropKeyList.add(globalKey);
         _builder = ImagePageBuilder(
           asset: asset,
           delegate: this,
+          globalKey: globalKey,
           isSendPostType: isSendPostType,
           previewThumbSize: previewThumbSize,
         );
@@ -700,15 +707,17 @@ class DefaultAssetPickerViewerBuilderDelegate
             child: ScaleText(
               () {
                 if (isWeChatMoment && hasVideo) {
-                  return Constants.textDelegate.confirm;
+                  return isSendPostType
+                      ? 'Next'
+                      : Constants.textDelegate.confirm;
                 }
                 if (provider!.isSelectedNotEmpty) {
-                  return '${Constants.textDelegate.confirm}'
+                  return '${isSendPostType ? 'Next' : Constants.textDelegate.confirm}'
                       ' (${provider.currentlySelectedAssets.length}'
                       '/'
                       '${selectorProvider!.maxAssets})';
                 }
-                return Constants.textDelegate.confirm;
+                return isSendPostType ? 'Next' : Constants.textDelegate.confirm;
               }(),
               style: TextStyle(
                 color: themeData.textTheme.bodyText1?.color,
@@ -716,25 +725,60 @@ class DefaultAssetPickerViewerBuilderDelegate
                 fontWeight: FontWeight.normal,
               ),
             ),
-            onPressed: () {
-              if (isWeChatMoment && hasVideo) {
-                Navigator.of(context).pop(<AssetEntity>[currentAsset]);
-                return;
-              }
-              if (provider!.isSelectedNotEmpty) {
+            onPressed: () async {
+              if (isSendPostType && provider!.isSelectedNotEmpty) {
+                List<File> resultFileList = [];
+                for (int i = 0;
+                    i < provider.currentlySelectedAssets.length;
+                    i++) {
+                  final File? fileData =
+                      await provider.currentlySelectedAssets[i].file;
+                  if (fileData != null) {
+                    final File cropFileData =
+                        await getCropperFile(fileData, cropKeyList[i]);
+                    resultFileList.add(cropFileData);
+                  }
+                }
+
+                for (int j = 0;
+                    j < provider.currentlySelectedAssets.length;
+                    j++) {
+                  provider.currentlySelectedAssets[j].relativePath =
+                      resultFileList[j].path;
+                }
+
                 Navigator.of(context).pop(provider.currentlySelectedAssets);
                 return;
+              } else {
+                if (isWeChatMoment && hasVideo) {
+                  Navigator.of(context).pop(<AssetEntity>[currentAsset]);
+                  return;
+                }
+                if (provider!.isSelectedNotEmpty) {
+                  Navigator.of(context).pop(provider.currentlySelectedAssets);
+                  return;
+                }
+                selectAsset(currentAsset);
+                Navigator.of(context).pop(
+                  selectedAssets ?? <AssetEntity>[currentAsset],
+                );
               }
-              selectAsset(currentAsset);
-              Navigator.of(context).pop(
-                selectedAssets ?? <AssetEntity>[currentAsset],
-              );
             },
             materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
           );
         },
       ),
     );
+  }
+
+  Future<File> getCropperFile(File file, GlobalKey<CropState> globalKey) async {
+    final Rect areaRect =
+        globalKey.currentState!.area ?? const Rect.fromLTRB(0, 0, 0, 0);
+    final File cFile = await ImageCrop.cropImage(
+      file: file,
+      area: areaRect,
+    );
+    return cFile;
   }
 
   /// Select button for apple OS.
