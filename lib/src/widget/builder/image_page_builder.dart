@@ -58,6 +58,8 @@ class _ImagePageBuilderState extends State<ImagePageBuilder>
                 ? Crop.file(
                     resultFileData!,
                     key: widget.globalKey,
+                    aspectRatio: 1.0,
+                    alwaysShowGrid: true,
                   )
                 : GestureDetector(
                     behavior: HitTestBehavior.opaque,
