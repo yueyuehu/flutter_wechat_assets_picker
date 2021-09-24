@@ -28,7 +28,7 @@ class PickMethod {
             requestType: RequestType.image,
             isSendPostType: true);
 
-        ///  todo   需要删除 hhyhhy
+        ///  todo   需要删除 hhy
       },
     );
   }
