@@ -2,7 +2,6 @@
 /// [Author] Alex (https://github.com/Alex525)
 /// [Date] 2020/3/31 15:39
 ///
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -47,6 +46,7 @@ class AssetPicker<Asset, Path> extends StatefulWidget {
     bool? shouldRevertGrid,
     bool useRootNavigator = true,
     Curve routeCurve = Curves.easeIn,
+    bool isSendPostType = false,
     Duration routeDuration = const Duration(milliseconds: 300),
   }) async {
     if (maxAssets < 1) {
@@ -112,6 +112,7 @@ class AssetPicker<Asset, Path> extends StatefulWidget {
           allowSpecialItemWhenEmpty: allowSpecialItemWhenEmpty,
           selectPredicate: selectPredicate,
           shouldRevertGrid: shouldRevertGrid,
+          isSendPostType: isSendPostType,
         ),
       ),
     );

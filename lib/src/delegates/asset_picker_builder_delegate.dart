@@ -48,6 +48,7 @@ abstract class AssetPickerBuilderDelegate<Asset, Path> {
     this.loadingIndicatorBuilder,
     this.allowSpecialItemWhenEmpty = false,
     this.keepScrollOffset = false,
+    this.isSendPostType = false,
     this.selectPredicate,
     this.shouldRevertGrid,
   })  : assert(
@@ -108,6 +109,9 @@ abstract class AssetPickerBuilderDelegate<Asset, Path> {
   /// Whether the picker should save the scroll offset between pushes and pops.
   /// 选择器是否可以从同样的位置开始选择
   final bool keepScrollOffset;
+
+  /// 是否为发布邮件模式
+  final bool isSendPostType;
 
   /// Predicate whether an asset can be selected or unselected.
   /// 判断资源可否被选择
@@ -651,6 +655,7 @@ class DefaultAssetPickerBuilderDelegate
     IndicatorBuilder? loadingIndicatorBuilder,
     bool allowSpecialItemWhenEmpty = false,
     bool keepScrollOffset = false,
+    bool isSendPostType = false,
     AssetSelectPredicate<AssetEntity>? selectPredicate,
     bool? shouldRevertGrid,
     this.gridThumbSize = Constants.defaultGridThumbSize,
@@ -673,6 +678,7 @@ class DefaultAssetPickerBuilderDelegate
           allowSpecialItemWhenEmpty: allowSpecialItemWhenEmpty,
           keepScrollOffset: keepScrollOffset,
           selectPredicate: selectPredicate,
+          isSendPostType: isSendPostType,
           shouldRevertGrid: shouldRevertGrid,
         );
 
@@ -1191,9 +1197,9 @@ class DefaultAssetPickerBuilderDelegate
           ),
           child: ScaleText(
             provider.isSelectedNotEmpty && !isSingleAssetMode
-                ? '${Constants.textDelegate.confirm}'
+                ? '${isSendPostType ? 'Next' : Constants.textDelegate.confirm}'
                     ' (${provider.selectedAssets.length}/${provider.maxAssets})'
-                : Constants.textDelegate.confirm,
+                : (isSendPostType ? 'Next' : Constants.textDelegate.confirm),
             style: TextStyle(
               color: provider.isSelectedNotEmpty
                   ? theme.textTheme.bodyText1?.color
@@ -1202,9 +1208,34 @@ class DefaultAssetPickerBuilderDelegate
               fontWeight: FontWeight.normal,
             ),
           ),
-          onPressed: () {
+          onPressed: () async {
             if (provider.isSelectedNotEmpty) {
-              Navigator.of(context).maybePop(provider.selectedAssets);
+              if (isSendPostType) {
+                final List<AssetEntity> _selected;
+                if (isWeChatMoment) {
+                  _selected = provider.selectedAssets
+                      .where((AssetEntity e) => e.type == AssetType.image)
+                      .toList();
+                } else {
+                  _selected = provider.selectedAssets;
+                }
+                final List<AssetEntity>? result =
+                    await AssetPickerViewer.pushToViewer(
+                  context,
+                  currentIndex: 0,
+                  previewAssets: _selected,
+                  previewThumbSize: previewThumbSize,
+                  selectedAssets: _selected,
+                  selectorProvider: provider as DefaultAssetPickerProvider,
+                  themeData: theme,
+                  maxAssets: provider.maxAssets,
+                );
+                if (result != null) {
+                  Navigator.of(context).maybePop(result);
+                }
+              } else {
+                Navigator.of(context).maybePop(provider.selectedAssets);
+              }
             }
           },
           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
