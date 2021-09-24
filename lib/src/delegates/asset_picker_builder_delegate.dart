@@ -1220,16 +1220,16 @@ class DefaultAssetPickerBuilderDelegate
                   _selected = provider.selectedAssets;
                 }
                 final List<AssetEntity>? result =
-                    await AssetPickerViewer.pushToViewer(
-                  context,
-                  currentIndex: 0,
-                  previewAssets: _selected,
-                  previewThumbSize: previewThumbSize,
-                  selectedAssets: _selected,
-                  selectorProvider: provider as DefaultAssetPickerProvider,
-                  themeData: theme,
-                  maxAssets: provider.maxAssets,
-                );
+                    await AssetPickerViewer.pushToViewer(context,
+                        currentIndex: 0,
+                        previewAssets: _selected,
+                        previewThumbSize: previewThumbSize,
+                        selectedAssets: _selected,
+                        selectorProvider:
+                            provider as DefaultAssetPickerProvider,
+                        themeData: theme,
+                        maxAssets: provider.maxAssets,
+                        isSendPostType: isSendPostType);
                 if (result != null) {
                   Navigator.of(context).maybePop(result);
                 }

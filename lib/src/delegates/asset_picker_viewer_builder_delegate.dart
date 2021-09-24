@@ -25,6 +25,7 @@ abstract class AssetPickerViewerBuilderDelegate<Asset, Path> {
     this.selectedAssets,
     this.maxAssets,
     this.shouldReversePreview = false,
+    this.isSendPostType = false,
   });
 
   /// [ChangeNotifier] for photo selector viewer.
@@ -54,6 +55,9 @@ abstract class AssetPickerViewerBuilderDelegate<Asset, Path> {
   /// clicked one item of the asset grid.
   /// 通常用户使用苹果系统时，点击网格内容进行预览，是反向进行预览。
   final bool shouldReversePreview;
+
+  /// 是否为发布帖子模式
+  final bool isSendPostType;
 
   /// [StreamController] for viewing page index update.
   /// 用于更新当前正在浏览的资源页码的流控制器
@@ -318,6 +322,7 @@ class DefaultAssetPickerViewerBuilderDelegate
     this.specialPickerType,
     int? maxAssets,
     bool shouldReversePreview = false,
+    bool isSendPostType = false,
   }) : super(
           currentIndex: currentIndex,
           previewAssets: previewAssets,
@@ -327,6 +332,7 @@ class DefaultAssetPickerViewerBuilderDelegate
           selectorProvider: selectorProvider,
           maxAssets: maxAssets,
           shouldReversePreview: shouldReversePreview,
+          isSendPostType: isSendPostType,
         );
 
   /// Thumb size for the preview of images in the viewer.
@@ -364,6 +370,7 @@ class DefaultAssetPickerViewerBuilderDelegate
         _builder = ImagePageBuilder(
           asset: asset,
           delegate: this,
+          isSendPostType: isSendPostType,
           previewThumbSize: previewThumbSize,
         );
         break;

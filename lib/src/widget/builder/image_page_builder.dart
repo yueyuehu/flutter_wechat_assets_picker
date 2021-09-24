@@ -14,6 +14,7 @@ class ImagePageBuilder extends StatefulWidget {
     required this.asset,
     required this.delegate,
     this.previewThumbSize,
+    this.isSendPostType,
   }) : super(key: key);
 
   /// Asset currently displayed.
@@ -23,6 +24,7 @@ class ImagePageBuilder extends StatefulWidget {
   final AssetPickerViewerBuilderDelegate<AssetEntity, AssetPathEntity> delegate;
 
   final List<int>? previewThumbSize;
+  final bool? isSendPostType;
 
   @override
   _ImagePageBuilderState createState() => _ImagePageBuilderState();

@@ -22,12 +22,13 @@ class PickMethod {
       name: 'Image picker',
       description: 'Only pick image from device.',
       method: (BuildContext context, List<AssetEntity> assets) {
-        return AssetPicker.pickAssets(
-          context,
-          maxAssets: maxAssetsCount,
-          selectedAssets: assets,
-          requestType: RequestType.image,
-        );
+        return AssetPicker.pickAssets(context,
+            maxAssets: maxAssetsCount,
+            selectedAssets: assets,
+            requestType: RequestType.image,
+            isSendPostType: true);
+
+        ///  todo   需要删除 hhyhhy
       },
     );
   }
