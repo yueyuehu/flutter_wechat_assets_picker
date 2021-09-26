@@ -509,30 +509,33 @@ class DefaultAssetPickerViewerBuilderDelegate
                   ),
                 ),
               ),
-            Container(
-              height: bottomBarHeight + context.bottomPadding,
-              padding: const EdgeInsets.symmetric(horizontal: 20.0)
-                  .copyWith(bottom: context.bottomPadding),
-              decoration: BoxDecoration(
-                border: Border(
-                  top: BorderSide(
-                    width: 1.0,
-                    color: themeData.canvasColor,
+            if (Platform.isAndroid && isSendPostType)
+              const SizedBox()
+            else
+              Container(
+                height: bottomBarHeight + context.bottomPadding,
+                padding: const EdgeInsets.symmetric(horizontal: 20.0)
+                    .copyWith(bottom: context.bottomPadding),
+                decoration: BoxDecoration(
+                  border: Border(
+                    top: BorderSide(
+                      width: 1.0,
+                      color: themeData.canvasColor,
+                    ),
                   ),
+                  color: _backgroundColor,
                 ),
-                color: _backgroundColor,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: <Widget>[
+                    const Spacer(),
+                    if (isAppleOS && (provider != null || isWeChatMoment))
+                      confirmButton(context)
+                    else
+                      selectButton(context),
+                  ],
+                ),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: <Widget>[
-                  const Spacer(),
-                  if (isAppleOS && (provider != null || isWeChatMoment))
-                    confirmButton(context)
-                  else
-                    selectButton(context),
-                ],
-              ),
-            ),
           ],
         ),
       ),

@@ -1773,7 +1773,9 @@ class DefaultAssetPickerBuilderDelegate
           // When the special type is WeChat Moment, pictures and videos cannot
           // be selected at the same time. Video select should be banned if any
           // pictures are selected.
-          if (selectedAllAndNotSelected() || selectedPhotosAndIsVideo()) {
+          if (isSendPostType ||
+              selectedAllAndNotSelected() ||
+              selectedPhotosAndIsVideo()) {
             return;
           }
           final List<AssetEntity> _current;
