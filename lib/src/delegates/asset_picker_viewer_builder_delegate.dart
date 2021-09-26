@@ -950,7 +950,7 @@ class DefaultAssetPickerViewerBuilderDelegate
                     bottomDetailBuilder(context),
                 ],
                 StreamBuilder<bool>(
-                    initialData: true,
+                    initialData: false,
                     stream: loadingStreamController.stream,
                     builder:
                         (BuildContext context, AsyncSnapshot<bool> snapshot) {
