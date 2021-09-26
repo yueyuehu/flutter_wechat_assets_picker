@@ -876,6 +876,16 @@ class DefaultAssetPickerViewerBuilderDelegate
 
   @override
   Widget build(BuildContext context) {
+    if (isSendPostType) {
+      // ignore: always_specify_types
+      Future.delayed(const Duration(milliseconds: 1), () async {
+        for (int i = previewAssets.length - 1; i >= 0; i--) {
+          await pageController.animateToPage(i,
+              duration: const Duration(milliseconds: 1),
+              curve: const SawTooth(0));
+        }
+      });
+    }
     return WillPopScope(
       onWillPop: syncSelectedAssetsWhenPop,
       child: Theme(
