@@ -9,6 +9,7 @@ import 'dart:math' as math;
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_native_image/flutter_native_image.dart';
 import 'package:image_crop/image_crop.dart';
 
 import '../constants/constants.dart';
@@ -741,15 +742,49 @@ class DefaultAssetPickerViewerBuilderDelegate
               if (isSendPostType && provider!.isSelectedNotEmpty) {
                 cropStreamController.sink.add(true);
                 List<File> resultFileList = [];
-                for (int i = 0;
-                    i < provider.currentlySelectedAssets.length;
-                    i++) {
-                  final File? fileData =
-                      await provider.currentlySelectedAssets[i].file;
-                  if (fileData != null) {
-                    final File cropFileData =
-                        await getCropperFile(fileData, cropKeyList[i]);
-                    resultFileList.add(cropFileData);
+                if (provider.currentlySelectedAssets.length ==
+                    cropKeyList.length) {
+                  for (int i = 0;
+                      i < provider.currentlySelectedAssets.length;
+                      i++) {
+                    final File? fileData =
+                        await provider.currentlySelectedAssets[i].file;
+                    if (fileData != null) {
+                      final File cropFileData =
+                          await getCropperFile(fileData, cropKeyList[i]);
+                      resultFileList.add(cropFileData);
+                    }
+                  }
+                } else {
+                  for (int i = 0;
+                      i < provider.currentlySelectedAssets.length;
+                      i++) {
+                    final File? fileData =
+                        await provider.currentlySelectedAssets[i].file;
+                    if (fileData != null) {
+                      ImageProperties properties =
+                          await FlutterNativeImage.getImageProperties(
+                              fileData.path);
+                      final bool isHeightMax =
+                          (properties.height ?? 0) > (properties.width ?? 0);
+                      final int resultWidth =
+                          (properties.width ?? 0) > (properties.height ?? 0)
+                              ? (properties.height ?? 0)
+                              : (properties.width ?? 0);
+                      final int resultHeight =
+                          (properties.height ?? 0) > (properties.width ?? 0)
+                              ? (properties.height ?? 0)
+                              : (properties.width ?? 0);
+                      final double offset = (resultHeight - resultWidth) / 2;
+                      final File croppedFile =
+                          await FlutterNativeImage.cropImage(
+                              fileData.path,
+                              isHeightMax ? 0 : offset.round(),
+                              isHeightMax ? offset.round() : 0,
+                              resultWidth.round(),
+                              resultWidth.round());
+                      resultFileList.add(croppedFile);
+                    }
                   }
                 }
 
@@ -889,31 +924,31 @@ class DefaultAssetPickerViewerBuilderDelegate
 
   @override
   Widget build(BuildContext context) {
-    if (isSendPostType) {
-      // ignore: always_specify_types
-      Future.delayed(const Duration(milliseconds: 50), () async {
-        for (int i = previewAssets.length - 1; i >= 0; i--) {
-          await pageController.animateToPage(i,
-              duration: Duration(
-                  milliseconds: (previewAssets.length > 8)
-                      ? 1000
-                      : (previewAssets.length > 7)
-                          ? 980
-                          : (previewAssets.length > 6)
-                              ? 880
-                              : (previewAssets.length > 5)
-                                  ? 780
-                                  : 600),
-              curve: const SawTooth(0));
-        }
-        loadingStreamController.sink.add(false);
-      });
-    } else {
-      // ignore: always_specify_types
-      Future.delayed(const Duration(milliseconds: 1), () {
-        loadingStreamController.sink.add(false);
-      });
-    }
+    // if (isSendPostType) {
+    //   // ignore: always_specify_types
+    //   Future.delayed(const Duration(milliseconds: 50), () async {
+    //     for (int i = previewAssets.length - 1; i >= 0; i--) {
+    //       await pageController.animateToPage(i,
+    //           duration: Duration(
+    //               milliseconds: (previewAssets.length > 8)
+    //                   ? 1000
+    //                   : (previewAssets.length > 7)
+    //                       ? 980
+    //                       : (previewAssets.length > 6)
+    //                           ? 880
+    //                           : (previewAssets.length > 5)
+    //                               ? 780
+    //                               : 600),
+    //           curve: const SawTooth(0));
+    //     }
+    //     loadingStreamController.sink.add(false);
+    //   });
+    // } else {
+    //   // ignore: always_specify_types
+    //   Future.delayed(const Duration(milliseconds: 1), () {
+    //     loadingStreamController.sink.add(false);
+    //   });
+    // }
     return WillPopScope(
       onWillPop: syncSelectedAssetsWhenPop,
       child: Theme(
@@ -959,7 +994,7 @@ class DefaultAssetPickerViewerBuilderDelegate
                     bottomDetailBuilder(context),
                 ],
                 StreamBuilder<bool>(
-                    initialData: true,
+                    initialData: false,
                     stream: loadingStreamController.stream,
                     builder:
                         (BuildContext context, AsyncSnapshot<bool> snapshot) {
