@@ -894,7 +894,16 @@ class DefaultAssetPickerViewerBuilderDelegate
       Future.delayed(const Duration(milliseconds: 100), () async {
         for (int i = previewAssets.length - 1; i >= 0; i--) {
           await pageController.animateToPage(i,
-              duration: const Duration(milliseconds: 500),
+              duration: Duration(
+                  milliseconds: (previewAssets.length > 8)
+                      ? 900
+                      : (previewAssets.length > 7)
+                          ? 850
+                          : (previewAssets.length > 6)
+                              ? 750
+                              : (previewAssets.length > 5)
+                                  ? 680
+                                  : 600),
               curve: const SawTooth(0));
         }
         loadingStreamController.sink.add(false);
