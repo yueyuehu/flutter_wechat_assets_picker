@@ -39,7 +39,7 @@ abstract class AssetPickerViewerBuilderDelegate<Asset, Path> {
   final List<Asset> previewAssets;
 
   /// 为发帖模式，保存globalKey
-  List<GlobalKey<CropState>> cropKeyList = [];
+  Map<int, GlobalKey<CropState>> cropKeyMap = {};
 
   /// Theme for the viewer.
   /// 主题
@@ -381,8 +381,8 @@ class DefaultAssetPickerViewerBuilderDelegate
         _builder = AudioPageBuilder(asset: asset);
         break;
       case AssetType.image:
-        GlobalKey<CropState> globalKey = GlobalKey<CropState>();
-        cropKeyList.add(globalKey);
+        final GlobalKey<CropState> globalKey = GlobalKey<CropState>();
+        cropKeyMap[index] = globalKey;
         _builder = ImagePageBuilder(
           asset: asset,
           delegate: this,
@@ -741,49 +741,21 @@ class DefaultAssetPickerViewerBuilderDelegate
             onPressed: () async {
               if (isSendPostType && provider!.isSelectedNotEmpty) {
                 cropStreamController.sink.add(true);
-                List<File> resultFileList = [];
-                if (provider.currentlySelectedAssets.length ==
-                    cropKeyList.length) {
-                  for (int i = 0;
-                      i < provider.currentlySelectedAssets.length;
-                      i++) {
-                    final File? fileData =
-                        await provider.currentlySelectedAssets[i].file;
-                    if (fileData != null) {
+                final List<File> resultFileList = [];
+                for (int i = 0;
+                    i < provider.currentlySelectedAssets.length;
+                    i++) {
+                  final File? fileData =
+                      await provider.currentlySelectedAssets[i].file;
+                  if (fileData != null) {
+                    if (cropKeyMap.containsKey(i)) {
                       final File cropFileData =
-                          await getCropperFile(fileData, cropKeyList[i]);
+                          await getCropperFile(fileData, cropKeyMap[i]!);
                       resultFileList.add(cropFileData);
-                    }
-                  }
-                } else {
-                  for (int i = 0;
-                      i < provider.currentlySelectedAssets.length;
-                      i++) {
-                    final File? fileData =
-                        await provider.currentlySelectedAssets[i].file;
-                    if (fileData != null) {
-                      final ImageProperties properties =
-                          await FlutterNativeImage.getImageProperties(
-                              fileData.path);
-                      final bool isHeightMax =
-                          (properties.height ?? 0) > (properties.width ?? 0);
-                      final int resultWidth =
-                          (properties.width ?? 0) > (properties.height ?? 0)
-                              ? (properties.height ?? 0)
-                              : (properties.width ?? 0);
-                      final int resultHeight =
-                          (properties.height ?? 0) > (properties.width ?? 0)
-                              ? (properties.height ?? 0)
-                              : (properties.width ?? 0);
-                      final double offset = (resultHeight - resultWidth) / 2;
-                      final File croppedFile =
-                          await FlutterNativeImage.cropImage(
-                              fileData.path,
-                              isHeightMax ? 0 : offset.round(),
-                              isHeightMax ? offset.round() : 0,
-                              resultWidth.round(),
-                              resultWidth.round());
-                      resultFileList.add(croppedFile);
+                    } else {
+                      final File cropFileData =
+                          await cropImageByWidthAndHeight(fileData.path);
+                      resultFileList.add(cropFileData);
                     }
                   }
                 }
@@ -817,6 +789,26 @@ class DefaultAssetPickerViewerBuilderDelegate
         },
       ),
     );
+  }
+
+  Future<File> cropImageByWidthAndHeight(String filePath) async {
+    final ImageProperties properties =
+        await FlutterNativeImage.getImageProperties(filePath);
+    final bool isHeightMax = (properties.height ?? 0) > (properties.width ?? 0);
+    final int resultWidth = (properties.width ?? 0) > (properties.height ?? 0)
+        ? (properties.height ?? 0)
+        : (properties.width ?? 0);
+    final int resultHeight = (properties.height ?? 0) > (properties.width ?? 0)
+        ? (properties.height ?? 0)
+        : (properties.width ?? 0);
+    final double offset = (resultHeight - resultWidth) / 2;
+    final File croppedFile = await FlutterNativeImage.cropImage(
+        filePath,
+        isHeightMax ? 0 : offset.round(),
+        isHeightMax ? offset.round() : 0,
+        resultWidth.round(),
+        resultWidth.round());
+    return croppedFile;
   }
 
   Future<File> getCropperFile(File file, GlobalKey<CropState> globalKey) async {
