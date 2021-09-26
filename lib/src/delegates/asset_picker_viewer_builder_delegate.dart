@@ -73,6 +73,14 @@ abstract class AssetPickerViewerBuilderDelegate<Asset, Path> {
   final StreamController<int> pageStreamController =
       StreamController<int>.broadcast();
 
+  ///  为 发布帖子模式，需要加载logading
+  final StreamController<bool> loadingStreamController =
+      StreamController<bool>.broadcast();
+
+  ///  为 发布帖子模式，开始裁剪图片，比较耗时，需要加载loading
+  final StreamController<bool> cropStreamController =
+      StreamController<bool>.broadcast();
+
   /// The [ScrollController] for the previewing assets list.
   /// 正在预览的资源的 [ScrollController]
   final ScrollController previewingListController = ScrollController();
@@ -165,6 +173,7 @@ abstract class AssetPickerViewerBuilderDelegate<Asset, Path> {
     provider?.dispose();
     pageController.dispose();
     pageStreamController.close();
+    loadingStreamController.close();
     previewingListController.dispose();
     selectedNotifier.dispose();
     isDisplayingDetail.dispose();
@@ -622,7 +631,7 @@ class DefaultAssetPickerViewerBuilderDelegate
 
   /// AppBar widget.
   /// 顶栏部件
-  Widget appBar(BuildContext context) {
+  Widget appBar(BuildContext context, bool isFromPostInit) {
     return ValueListenableBuilder<bool>(
       valueListenable: isDisplayingDetail,
       builder: (_, bool value, Widget? child) => AnimatedPositionedDirectional(
@@ -661,7 +670,7 @@ class DefaultAssetPickerViewerBuilderDelegate
                 stream: pageStreamController.stream,
                 builder: (_, AsyncSnapshot<int> snapshot) => Center(
                   child: ScaleText(
-                    '${snapshot.data! + 1}/${previewAssets.length}',
+                    '${isFromPostInit ? 1 : (snapshot.data! + 1)}/${previewAssets.length}',
                     style: const TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.w500,
@@ -727,6 +736,7 @@ class DefaultAssetPickerViewerBuilderDelegate
             ),
             onPressed: () async {
               if (isSendPostType && provider!.isSelectedNotEmpty) {
+                cropStreamController.sink.add(true);
                 List<File> resultFileList = [];
                 for (int i = 0;
                     i < provider.currentlySelectedAssets.length;
@@ -746,7 +756,7 @@ class DefaultAssetPickerViewerBuilderDelegate
                   provider.currentlySelectedAssets[j].relativePath =
                       resultFileList[j].path;
                 }
-
+                cropStreamController.sink.add(false);
                 Navigator.of(context).pop(provider.currentlySelectedAssets);
                 return;
               } else {
@@ -878,12 +888,18 @@ class DefaultAssetPickerViewerBuilderDelegate
   Widget build(BuildContext context) {
     if (isSendPostType) {
       // ignore: always_specify_types
-      Future.delayed(const Duration(milliseconds: 1), () async {
+      Future.delayed(const Duration(milliseconds: 5), () async {
         for (int i = previewAssets.length - 1; i >= 0; i--) {
           await pageController.animateToPage(i,
-              duration: const Duration(milliseconds: 1),
+              duration: const Duration(milliseconds: 2),
               curve: const SawTooth(0));
         }
+        loadingStreamController.sink.add(false);
+      });
+    } else {
+      // ignore: always_specify_types
+      Future.delayed(const Duration(milliseconds: 1), () {
+        loadingStreamController.sink.add(false);
       });
     }
     return WillPopScope(
@@ -925,11 +941,52 @@ class DefaultAssetPickerViewerBuilderDelegate
                     child: confirmButton(context),
                   ),
                 ] else ...<Widget>[
-                  appBar(context),
+                  appBar(context, false),
                   if (selectedAssets != null ||
                       (isWeChatMoment && hasVideo && isAppleOS))
                     bottomDetailBuilder(context),
                 ],
+                StreamBuilder<bool>(
+                    initialData: true,
+                    stream: loadingStreamController.stream,
+                    builder:
+                        (BuildContext context, AsyncSnapshot<bool> snapshot) {
+                      final bool isVisibility = snapshot.data ?? false;
+                      return isVisibility
+                          ? Container(
+                              color: Colors.grey[900],
+                              child: Stack(
+                                children: [
+                                  const Center(
+                                    child: PlatformProgressIndicator(
+                                      color: Colors.white,
+                                      size: 30,
+                                    ),
+                                  ),
+                                  appBar(context, true)
+                                ],
+                              ),
+                            )
+                          : const SizedBox();
+                    }),
+                StreamBuilder<bool>(
+                    initialData: false,
+                    stream: cropStreamController.stream,
+                    builder:
+                        (BuildContext context, AsyncSnapshot<bool> snapshot) {
+                      final bool isVisibility = snapshot.data ?? false;
+                      return isVisibility
+                          ? Container(
+                              color: Colors.black54,
+                              child: const Center(
+                                child: PlatformProgressIndicator(
+                                  color: Colors.white,
+                                  size: 30,
+                                ),
+                              ),
+                            )
+                          : const SizedBox();
+                    })
               ],
             ),
           ),
