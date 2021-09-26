@@ -889,22 +889,22 @@ class DefaultAssetPickerViewerBuilderDelegate
 
   @override
   Widget build(BuildContext context) {
-    // if (isSendPostType) {
-    //   // ignore: always_specify_types
-    //   Future.delayed(const Duration(milliseconds: 5), () async {
-    //     for (int i = previewAssets.length - 1; i >= 0; i--) {
-    //       await pageController.animateToPage(i,
-    //           duration: const Duration(milliseconds: 2),
-    //           curve: const SawTooth(0));
-    //     }
-    //     loadingStreamController.sink.add(false);
-    //   });
-    // } else {
-    //   // ignore: always_specify_types
-    //   Future.delayed(const Duration(milliseconds: 1), () {
-    //     loadingStreamController.sink.add(false);
-    //   });
-    // }
+    if (isSendPostType) {
+      // ignore: always_specify_types
+      Future.delayed(const Duration(milliseconds: 100), () async {
+        for (int i = previewAssets.length - 1; i >= 0; i--) {
+          await pageController.animateToPage(i,
+              duration: const Duration(milliseconds: 500),
+              curve: const SawTooth(0));
+        }
+        loadingStreamController.sink.add(false);
+      });
+    } else {
+      // ignore: always_specify_types
+      Future.delayed(const Duration(milliseconds: 1), () {
+        loadingStreamController.sink.add(false);
+      });
+    }
     return WillPopScope(
       onWillPop: syncSelectedAssetsWhenPop,
       child: Theme(
@@ -950,7 +950,7 @@ class DefaultAssetPickerViewerBuilderDelegate
                     bottomDetailBuilder(context),
                 ],
                 StreamBuilder<bool>(
-                    initialData: false,
+                    initialData: true,
                     stream: loadingStreamController.stream,
                     builder:
                         (BuildContext context, AsyncSnapshot<bool> snapshot) {
