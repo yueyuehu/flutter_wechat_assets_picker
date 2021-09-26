@@ -891,18 +891,18 @@ class DefaultAssetPickerViewerBuilderDelegate
   Widget build(BuildContext context) {
     if (isSendPostType) {
       // ignore: always_specify_types
-      Future.delayed(const Duration(milliseconds: 100), () async {
+      Future.delayed(const Duration(milliseconds: 50), () async {
         for (int i = previewAssets.length - 1; i >= 0; i--) {
           await pageController.animateToPage(i,
               duration: Duration(
                   milliseconds: (previewAssets.length > 8)
-                      ? 900
+                      ? 1000
                       : (previewAssets.length > 7)
-                          ? 850
+                          ? 980
                           : (previewAssets.length > 6)
-                              ? 750
+                              ? 880
                               : (previewAssets.length > 5)
-                                  ? 680
+                                  ? 780
                                   : 600),
               curve: const SawTooth(0));
         }
