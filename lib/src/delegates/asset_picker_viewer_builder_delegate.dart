@@ -762,7 +762,7 @@ class DefaultAssetPickerViewerBuilderDelegate
                     final File? fileData =
                         await provider.currentlySelectedAssets[i].file;
                     if (fileData != null) {
-                      ImageProperties properties =
+                      final ImageProperties properties =
                           await FlutterNativeImage.getImageProperties(
                               fileData.path);
                       final bool isHeightMax =
