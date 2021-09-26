@@ -2,6 +2,8 @@
 /// [Author] Alex (https://github.com/Alex525)
 /// [Date] 2020/4/6 15:07
 ///
+import 'dart:async';
+
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
 import 'package:image_crop/image_crop.dart';
@@ -34,68 +36,84 @@ class ImagePageBuilder extends StatefulWidget {
 
 class _ImagePageBuilderState extends State<ImagePageBuilder>
     with AutomaticKeepAliveClientMixin<ImagePageBuilder> {
+  final StreamController<bool> cropStreamController =
+      StreamController<bool>.broadcast();
   File? resultFileData;
   bool hasGetFile = false;
   @override
+  void initState() {
+    super.initState();
+    widget.asset.file.then((File? value) {
+      hasGetFile = true;
+      resultFileData = value;
+      cropStreamController.sink.add(true);
+    });
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    cropStreamController.close();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return LocallyAvailableBuilder(
-      asset: widget.asset,
-      isOriginal: widget.previewThumbSize == null,
-      builder: (BuildContext context, AssetEntity asset) {
-        asset.file.then((File? value) {
-          hasGetFile = true;
-          resultFileData = value;
-          // ignore: always_specify_types
-          Future.delayed(const Duration(milliseconds: 10), () {
-            setState(() {});
-          });
+    return StreamBuilder<bool>(
+        stream: cropStreamController.stream,
+        builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
+          return LocallyAvailableBuilder(
+            asset: widget.asset,
+            isOriginal: widget.previewThumbSize == null,
+            builder: (BuildContext context, AssetEntity asset) {
+              return ((widget.isSendPostType ?? false) && !hasGetFile)
+                  ? const SizedBox()
+                  : ((widget.isSendPostType ?? false) &&
+                          hasGetFile &&
+                          resultFileData != null)
+                      ? Crop.file(
+                          resultFileData!,
+                          key: widget.globalKey,
+                          aspectRatio: 1.0,
+                          alwaysShowGrid: true,
+                        )
+                      : GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: widget.delegate.switchDisplayingDetail,
+                          child: ExtendedImage(
+                            image: AssetEntityImageProvider(
+                              asset,
+                              isOriginal: widget.previewThumbSize == null,
+                              thumbSize: widget.previewThumbSize,
+                            ),
+                            fit: BoxFit.contain,
+                            mode: ExtendedImageMode.gesture,
+                            onDoubleTap: widget.delegate.updateAnimation,
+                            initGestureConfigHandler:
+                                (ExtendedImageState state) {
+                              return GestureConfig(
+                                initialScale: 1.0,
+                                minScale: 1.0,
+                                maxScale: 3.0,
+                                animationMinScale: 0.6,
+                                animationMaxScale: 4.0,
+                                cacheGesture: false,
+                                inPageView: true,
+                              );
+                            },
+                            loadStateChanged: (ExtendedImageState state) {
+                              return widget.delegate
+                                  .previewWidgetLoadStateChanged(
+                                context,
+                                state,
+                                hasLoaded: state.extendedImageLoadState ==
+                                    LoadState.completed,
+                              );
+                            },
+                          ),
+                        );
+            },
+          );
         });
-        return ((widget.isSendPostType ?? false) && !hasGetFile)
-            ? const SizedBox()
-            : ((widget.isSendPostType ?? false) &&
-                    hasGetFile &&
-                    resultFileData != null)
-                ? Crop.file(
-                    resultFileData!,
-                    key: widget.globalKey,
-                    aspectRatio: 1.0,
-                    alwaysShowGrid: true,
-                  )
-                : GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: widget.delegate.switchDisplayingDetail,
-                    child: ExtendedImage(
-                      image: AssetEntityImageProvider(
-                        asset,
-                        isOriginal: widget.previewThumbSize == null,
-                        thumbSize: widget.previewThumbSize,
-                      ),
-                      fit: BoxFit.contain,
-                      mode: ExtendedImageMode.gesture,
-                      onDoubleTap: widget.delegate.updateAnimation,
-                      initGestureConfigHandler: (ExtendedImageState state) {
-                        return GestureConfig(
-                          initialScale: 1.0,
-                          minScale: 1.0,
-                          maxScale: 3.0,
-                          animationMinScale: 0.6,
-                          animationMaxScale: 4.0,
-                          cacheGesture: false,
-                          inPageView: true,
-                        );
-                      },
-                      loadStateChanged: (ExtendedImageState state) {
-                        return widget.delegate.previewWidgetLoadStateChanged(
-                          context,
-                          state,
-                          hasLoaded: state.extendedImageLoadState ==
-                              LoadState.completed,
-                        );
-                      },
-                    ),
-                  );
-      },
-    );
   }
 
   @override
