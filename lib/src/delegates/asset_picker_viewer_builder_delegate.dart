@@ -660,7 +660,8 @@ class DefaultAssetPickerViewerBuilderDelegate
                   onPressed: Navigator.of(context).maybePop,
                 ),
                 const Spacer(),
-                if (isAppleOS && provider != null) selectButton(context),
+                if (!isSendPostType && isAppleOS && provider != null)
+                  selectButton(context),
                 if (!isAppleOS && (provider != null || isWeChatMoment))
                   Padding(
                     padding: const EdgeInsetsDirectional.only(end: 14),

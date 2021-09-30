@@ -467,7 +467,7 @@ abstract class AssetPickerBuilderDelegate<Asset, Path> {
   /// Action bar widget aligned to bottom.
   /// 底部操作栏部件
   Widget bottomActionBar(BuildContext context) {
-    if (isSendPostType) {
+    if (Platform.isAndroid && isSendPostType) {
       return const SizedBox();
     }
     Widget child = Container(
@@ -477,7 +477,8 @@ abstract class AssetPickerBuilderDelegate<Asset, Path> {
       ),
       color: theme.primaryColor.withOpacity(isAppleOS ? 0.90 : 1),
       child: Row(children: <Widget>[
-        if (!isSingleAssetMode || !isAppleOS) previewButton(context),
+        if (!isSendPostType && (!isSingleAssetMode || !isAppleOS))
+          previewButton(context),
         if (isAppleOS) const Spacer(),
         if (isAppleOS) confirmButton(context),
       ]),
